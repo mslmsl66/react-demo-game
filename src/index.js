@@ -109,6 +109,12 @@ class Game extends React.Component {
     });
   }
 
+  toggleDESC() {
+    this.setState({
+      isDesc: !this.state.isDesc
+    });
+  }
+
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber]; // 拿当前的九宫格记录
@@ -139,6 +145,8 @@ class Game extends React.Component {
       status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
 
+    let steps = this.state.isDesc ? moves.reverse() : moves;
+
     return (
       <div className="game">
         <div className="game-board">
@@ -148,8 +156,9 @@ class Game extends React.Component {
           />
         </div>
         <div className="game-info">
+          <button onClick={() => this.toggleDESC()}>切换升降序</button>
           <div>{status}</div>
-          <ol>{moves}</ol>
+          <ol>{steps}</ol>
         </div>
       </div>
     );
