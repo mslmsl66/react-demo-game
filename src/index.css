@@ -56,3 +56,7 @@ ol, ul {
 .step-weight {
   font-weight: 700;
 }
+
+.square-highlight {
+  color: yellow;
+}

@@ -9,9 +9,10 @@ import './index.css';
 // 函数组件、纯函数，相比于class拥有更好的性能，但是没有生命周期以及state
 function Square(props) {
   // 点击事件，并触发父组件的onClick
+  let className = props.highLight ? props.highLight + ' square' : 'square';
   return (
     // 这个click是向上的，在game组件里
-    <button className="square" onClick={props.onClick}>
+    <button className={className} onClick={props.onClick}>
       {props.value}
     </button>
   );
@@ -25,9 +26,19 @@ class Board extends React.Component {
     console.log('啊啊啊')
   }
 
+  isNeedHighLight(i, j) {
+    if (this.props.winLines) {
+      // 结构 [{x:0,y:0}, {x:0, y:1}, {x:0, y:2}]
+      return this.props.winLines.some(point => point.x === i && point.y === j);
+    }
+    return false;
+  }
+
   renderSquare(i, j) {
+    let squareClass = this.isNeedHighLight(i, j) ? 'square-highlight' : '';
     return (
       <Square
+        highLight={squareClass}
         value={this.props.squares[i][j]}
         onClick={this.handleClick.bind(this, i, j)}
         key={i + '' + j}
@@ -88,7 +99,7 @@ class Game extends React.Component {
     // const copy = current.squares.slice();
     const copy = _.cloneDeep(current.squares);
     if (copy[i][j] || calculateWinner(copy)) {
-      // 已经有赢家或已点击
+      // 已点击或已有赢家
       return;
     }
     copy[i][j] = this.state.xIsNext ? 'X' : 'O'; // 下棋
@@ -140,7 +151,7 @@ class Game extends React.Component {
 
     let status;
     if (winner) {
-      status = 'Winner: ' + winner;
+      status = 'Winner: ' + winner.winner;
     } else {
       status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
@@ -152,6 +163,7 @@ class Game extends React.Component {
         <div className="game-board">
           <Board
             squares={current.squares}
+            winLines={winner ? winner.lines : []}
             onClick={(i, j) => this.handleClick(i, j)} // 由Square传到Board，传到Game
           />
         </div>
@@ -192,7 +204,10 @@ function calculateWinner(squares) {
     const [p1, p2, p3] = lines[i];
     // [[], [], []]
     if (squares[p1.x][p1.y] && squares[p1.x][p1.y] === squares[p2.x][p2.y] && squares[p1.x][p1.y] === squares[p3.x][p3.y]) {
-      return squares[p1.x][p1.y];
+      return {
+        winner: squares[p1.x][p1.y],
+        lines: lines[i]
+      };
     }
   }
   return null;
