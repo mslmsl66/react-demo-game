@@ -38,22 +38,19 @@ class Board extends React.Component {
   }
 
   render() {
-    let getRowList = (arr, rowIndex) => {
-      return arr.map(item => {
-        return this.renderSquare(rowIndex, item);
-      })
+    let getSquares = () => {
+      let squares = [];
+      for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+          squares.push(this.renderSquare(i, j));
+        }
+      }
+      return squares;
     };
+    let squares = getSquares();
     return (
-      <div>
-        <div className="board-row">
-          {getRowList([0,1,2], 0)}
-        </div>
-        <div className="board-row">
-          {getRowList([0,1,2], 1)}
-        </div>
-        <div className="board-row">
-          {getRowList([0,1,2], 2)}
-        </div>
+      <div className="board">
+        {squares}
       </div>
     );
   }
