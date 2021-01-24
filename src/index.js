@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import TempCalculator from './temperature';
 import Test from './testChildren';
+import _ from 'lodash';
 import './index.css';
 
 // 小方格
@@ -19,17 +20,17 @@ function Square(props) {
 // 九宫格
 // class组件，继承自React.Component有生命周期
 class Board extends React.Component {
-  handleClick(i) {
-    this.props.onClick(i);
+  handleClick(i, j) {
+    this.props.onClick(i, j);
     console.log('啊啊啊')
   }
 
-  renderSquare(i) {
+  renderSquare(i, j) {
     return (
       <Square
-        value={this.props.squares[i]}
-        onClick={this.handleClick.bind(this, i)}
-        key={i}
+        value={this.props.squares[i][j]}
+        onClick={this.handleClick.bind(this, i, j)}
+        key={i + '' + j}
         // 每一个Square里的Button被点击，这个prop onClick就会被触发
         // 经实验，这个onClick没有绑定事件，一定要Square组件里有onClick触发才会被执行
       />
@@ -37,24 +38,35 @@ class Board extends React.Component {
   }
 
   render() {
-    let getList = (arr) => {
+    let getRowList = (arr, rowIndex) => {
       return arr.map(item => {
-        return this.renderSquare(item);
+        return this.renderSquare(rowIndex, item);
       })
     };
     return (
       <div>
         <div className="board-row">
-          {getList([0,1,2])}
+          {getRowList([0,1,2], 0)}
         </div>
         <div className="board-row">
-          {getList([3,4,5])}
+          {getRowList([0,1,2], 1)}
         </div>
         <div className="board-row">
-          {getList([6,7,8])}
+          {getRowList([0,1,2], 2)}
         </div>
       </div>
     );
+  }
+}
+
+class Point {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+  }
+
+  toString() {
+    return `(${this.x}, ${this.y})`;
   }
 }
 
@@ -64,27 +76,31 @@ class Game extends React.Component {
     super(props);
     this.state = {
       history: [{
-        squares: new Array(9) // squares是一个 九宫格，初始化时是空的九宫格，游戏还没开始。后续执行一步，history就加一个九宫格
+        squares: [[], [], []], // squares是一个 九宫格，初始化时是空的九宫格，游戏还没开始。后续执行一步，history就加一个九宫格
+        newStep: {}
       }],
       xIsNext: true,
       stepNumber: 0
     };
   }
 
-
-  handleClick(i) {
+  handleClick(i, j) {
     // 每次click都会在history尾部加一个新的九宫格，这个新九宫格是上一步的复制，未来的一步就基于这个复制去更改
     const history = this.state.history.slice(0, this.state.stepNumber + 1); // 从第0步浅拷贝到当前一步
     const current = history[history.length - 1]; // 默认取最后一个，如果是刚开始那就是空的九宫格，否则就是上一步的复制
-    const copy = current.squares.slice();
-    if (copy[i] || calculateWinner(copy)) {
+    // const copy = current.squares.slice();
+    const copy = _.cloneDeep(current.squares);
+    if (copy[i][j] || calculateWinner(copy)) {
       // 已经有赢家或已点击
       return;
     }
-    copy[i] = this.state.xIsNext ? 'X' : 'O'; // 下棋
+    copy[i][j] = this.state.xIsNext ? 'X' : 'O'; // 下棋
     this.setState({
       stepNumber: this.state.stepNumber + 1, // 每次点击，步骤+1
-      history: history.concat([{squares: copy}]), // 记录新加一个九宫格，当前步九宫格的复制。concat返回新的数组，不会更改原数组
+      history: history.concat([{
+        squares: copy,
+        newStep: new Point(i, j)
+      }]), // 记录新加一个九宫格，当前步九宫格的复制。concat返回新的数组，不会更改原数组
       xIsNext: !this.state.xIsNext
     });
   }
@@ -103,7 +119,7 @@ class Game extends React.Component {
 
     const moves = history.map((currentValue, index) => {
       const desc = index ?
-        'Go to move #' + index :
+        'Go to move #' + currentValue.newStep.toString() :
         'Go to game start';
       return (
         <li key={index}>
@@ -124,7 +140,7 @@ class Game extends React.Component {
         <div className="game-board">
           <Board
             squares={current.squares}
-            onClick={(i) => this.handleClick(i)} // 由Square传到Board，传到Game
+            onClick={(i, j) => this.handleClick(i, j)} // 由Square传到Board，传到Game
           />
         </div>
         <div className="game-info">
@@ -149,19 +165,21 @@ ReactDOM.render(
 
 function calculateWinner(squares) {
   const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
+    [{x:0,y:0}, {x:0, y:1}, {x:0, y:2}],
+    [{x:1,y:0}, {x:1, y:1}, {x:1, y:2}],
+    [{x:2,y:0}, {x:2, y:1}, {x:2, y:2}],
+    [{x:0,y:0}, {x:1, y:0}, {x:2, y:0}],
+    [{x:0,y:1}, {x:1, y:1}, {x:2, y:1}],
+    [{x:0,y:2}, {x:1, y:2}, {x:2, y:2}],
+    [{x:0,y:0}, {x:1, y:1}, {x:2, y:2}],
+    [{x:2,y:0}, {x:1, y:1}, {x:0, y:2}],
   ];
+
   for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
-      return squares[a];
+    const [p1, p2, p3] = lines[i];
+    // [[], [], []]
+    if (squares[p1.x][p1.y] && squares[p1.x][p1.y] === squares[p2.x][p2.y] && squares[p1.x][p1.y] === squares[p3.x][p3.y]) {
+      return squares[p1.x][p1.y];
     }
   }
   return null;
