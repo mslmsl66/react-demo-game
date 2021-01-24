@@ -52,3 +52,7 @@ ol, ul {
 .FancyBorder-blue {
   color: blue;
 }
+
+.step-weight {
+  font-weight: 700;
+}

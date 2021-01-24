@@ -118,12 +118,19 @@ class Game extends React.Component {
     const winner = calculateWinner(current.squares);
 
     const moves = history.map((currentValue, index) => {
+      let isThick = this.state.stepNumber === index;
+      let fontClass = isThick ? 'step-weight' : '';
       const desc = index ?
         'Go to move #' + currentValue.newStep.toString() :
         'Go to game start';
       return (
         <li key={index}>
-          <button onClick={() => this.jumpTo(index)}>{desc}</button>
+          <button
+            onClick={() => this.jumpTo(index)}
+            className={fontClass}
+          >
+            {desc}
+          </button>
         </li>
       );
     });
